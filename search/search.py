@@ -82,7 +82,9 @@ def graphSearch(problem, frontier):
 
     while not frontier.isEmpty():
         path = frontier.pop()
-        state = path[len(path) - 1][0]
+        state = path[len(path) - 1][0]              # state is last of a path
+        if state in visited:
+            continue
         visited.append(state)
 
         print "Visiting:", state
@@ -92,7 +94,7 @@ def graphSearch(problem, frontier):
 
         successors = problem.getSuccessors(state)   #[((x, y), dir, cost), ]
         for elem in successors:
-            if elem[0] not in visited:
+            if not elem[0] in visited:              # may add duplicate
                 newPath = path[:]
                 newPath.append(elem)
                 frontier.push(newPath)
