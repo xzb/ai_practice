@@ -378,7 +378,46 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    #return 0 # Default to trivial solution
+
+    # ************************************************
+    # Idea: find the minimum spanning tree of graph,
+    #       use the total length of that tree as heuristic
+    # ************************************************
+    manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
+    edgeQueue = util.PriorityQueueWithFunction(manDistance)
+
+    nodes = [state[0]]
+    for i in range(0,4,1):
+        if state[1][i]:         # check existence of food
+            nodes.append(corners[i])
+
+    num = len(nodes)
+    for i in range(0, num, 1):
+        for j in range(i + 1, num, 1):
+            edgeQueue.push((nodes[i], nodes[j]))    # prepare the queue
+
+    visited = []
+    heuristicVal = 0
+    if edgeQueue.isEmpty():     # no food exists
+        return heuristicVal
+
+    while len(visited) < num:
+        n1, n2 = edgeQueue.pop()
+        distance = util.manhattanDistance(n1, n2)
+        if n1 not in visited and n2 not in visited:
+            visited.append(n1)
+            visited.append(n2)
+            heuristicVal += distance
+        elif n1 not in visited:
+            visited.append(n1)
+            heuristicVal += distance
+        elif n2 not in visited:
+            visited.append(n2)
+            heuristicVal += distance
+
+    return heuristicVal
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
