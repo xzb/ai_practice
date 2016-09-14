@@ -297,7 +297,9 @@ class CornersProblem(search.SearchProblem):
         "*** YOUR CODE HERE ***"
         #util.raiseNotDefined()
 
+        # *********************************************
         # state format: ((x, y), [corner1, c2, c3, c4]) => position of pacman and boolean food at four corners
+        # *********************************************
         state = (self.startingPosition, [self.startingPosition != corner for corner in self.corners])
         return state
 
@@ -383,38 +385,34 @@ def cornersHeuristic(state, problem):
     # ************************************************
     # Idea: find the minimum spanning tree of graph,
     #       use the total length of that tree as heuristic
+    #
+    # Prim's minimum spanning tree   814 nodes expanded
     # ************************************************
     manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
     edgeQueue = util.PriorityQueueWithFunction(manDistance)
 
-    nodes = [state[0]]
+    visited = [state[0]]
+    newAdd = state[0]
+    foodset = []
     for i in range(0,4,1):
         if state[1][i]:         # check existence of food
-            nodes.append(corners[i])
-
-    num = len(nodes)
-    for i in range(0, num, 1):
-        for j in range(i + 1, num, 1):
-            edgeQueue.push((nodes[i], nodes[j]))    # prepare the queue
-
-    visited = []
+            foodset.append(corners[i])
+    num = len(foodset)
     heuristicVal = 0
-    if edgeQueue.isEmpty():     # no food exists
-        return heuristicVal
 
-    while len(visited) < num:
-        n1, n2 = edgeQueue.pop()
-        distance = util.manhattanDistance(n1, n2)
-        if n1 not in visited and n2 not in visited:
-            visited.append(n1)
-            visited.append(n2)
-            heuristicVal += distance
-        elif n1 not in visited:
-            visited.append(n1)
-            heuristicVal += distance
-        elif n2 not in visited:
-            visited.append(n2)
-            heuristicVal += distance
+    while len(visited) < num + 1:
+        for food in foodset:
+            edgeQueue.push((newAdd, food))
+
+        while True:
+            n1, n2 = edgeQueue.pop()
+            if n2 not in visited:
+                #print "**Connect:", n1, n2
+                visited.append(n2)
+                foodset.remove(n2)
+                newAdd = n2
+                heuristicVal += util.manhattanDistance(n1, n2)
+                break
 
     return heuristicVal
 
@@ -511,7 +509,72 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    #return 0
+
+    # ************************************************
+    # incomplete mininum spanning tree    8918 nodes expanded
+    # ************************************************
+    # manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
+    # edgeQueue = util.PriorityQueueWithFunction(manDistance)
+    #
+    # nodes = foodGrid.asList()
+    # nodes.append(state[0])
+    #
+    # num = len(nodes)
+    # for i in range(0, num, 1):
+    #     for j in range(i + 1, num, 1):
+    #         edgeQueue.push((nodes[i], nodes[j]))    # prepare the queue
+    #
+    # visited = []
+    # heuristicVal = 0
+    # if edgeQueue.isEmpty():     # no food exists
+    #     return heuristicVal
+    #
+    # while len(visited) < num:
+    #     n1, n2 = edgeQueue.pop()
+    #     distance = util.manhattanDistance(n1, n2)
+    #     if n1 not in visited and n2 not in visited:
+    #         visited.append(n1)
+    #         visited.append(n2)
+    #         heuristicVal += distance
+    #     elif n1 not in visited:
+    #         visited.append(n1)
+    #         heuristicVal += distance
+    #     elif n2 not in visited:
+    #         visited.append(n2)
+    #         heuristicVal += distance
+    #
+    # return heuristicVal
+
+
+    # ************************************************
+    # Prim's minimum spanning tree   7162 nodes expanded
+    # ************************************************
+    manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
+    edgeQueue = util.PriorityQueueWithFunction(manDistance)
+
+    visited = [position]
+    newAdd = position
+    foodset = set(foodGrid.asList())
+    num = len(foodset)
+    heuristicVal = 0
+
+    while len(visited) < num + 1:
+        for food in foodset:
+            edgeQueue.push((newAdd, food))
+
+        while True:
+            n1, n2 = edgeQueue.pop()
+            if n2 not in visited:
+                #print "**Connect:", n1, n2
+                visited.append(n2)
+                foodset.remove(n2)
+                newAdd = n2
+                heuristicVal += util.manhattanDistance(n1, n2)
+                break
+
+    return heuristicVal
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
