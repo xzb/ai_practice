@@ -605,7 +605,34 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        # *********************************************
+        # similar as graphSearch in search.py, return a list of actions
+        # *********************************************
+        frontier = util.Queue()             # bfs
+        frontier.push([(problem.getStartState(), 'Stop', 0)])
+        visited = []
+
+        while not frontier.isEmpty():
+            path = frontier.pop()
+            pos = path[len(path) - 1][0]
+            if pos in visited:
+                continue
+            visited.append(pos)
+
+            if problem.isGoalState(pos):
+                return [elem[1] for elem in path][1:]
+
+            successors = problem.getSuccessors(pos)
+            for elem in successors:
+                if elem[0] not in visited:
+                    newPath = path[:]
+                    newPath.append(elem)
+                    frontier.push(newPath)
+
+        return []
+
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -641,7 +668,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        return self.food[x][y] or self.food.count() == 0          # meet the closest food
+
 
 def mazeDistance(point1, point2, gameState):
     """
