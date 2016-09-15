@@ -73,24 +73,31 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def graphSearch(problem, frontier):
-    print "Start:", problem.getStartState()
-    print "Is goal reached?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    #print "Start:", problem.getStartState()
+    #print "Is goal reached?", problem.isGoalState(problem.getStartState())
+    #print "Start's successors:", problem.getSuccessors(problem.getStartState())
 
     visited = []
-    frontier.push([(problem.getStartState(), 'Stop', 0)])
+    #frontier.push([(problem.getStartState(), 'Stop', 0)])
+    path = []
+    state = problem.getStartState()
+    isBegin = True
 
-    while not frontier.isEmpty():
-        path = frontier.pop()
-        state = path[len(path) - 1][0]              # state is last of a path
+    while not frontier.isEmpty() or isBegin:
+        if isBegin:
+            isBegin = False
+        else:
+            path = frontier.pop()
+            state = path[len(path) - 1][0]              # state is last of a path
+
         if state in visited:
             continue
         visited.append(state)
 
-        print "Visiting:", state
+        #print "Visiting:", state
 
         if problem.isGoalState(state):
-            return [elem[1] for elem in path][1:]
+            return [elem[1] for elem in path][:]
 
         successors = problem.getSuccessors(state)   #[((x, y), dir, cost), ]
         for elem in successors:

@@ -40,6 +40,7 @@ from game import Actions
 import util
 import time
 import search
+import math
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -388,8 +389,8 @@ def cornersHeuristic(state, problem):
     #
     # Prim's minimum spanning tree   814 nodes expanded
     # ************************************************
-    manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
-    edgeQueue = util.PriorityQueueWithFunction(manDistance)
+    eucDistance = lambda pair : euclidieanDistance(pair[0], pair[1])
+    edgeQueue = util.PriorityQueueWithFunction(eucDistance)
 
     visited = [state[0]]
     newAdd = state[0]
@@ -411,10 +412,15 @@ def cornersHeuristic(state, problem):
                 visited.append(n2)
                 foodset.remove(n2)
                 newAdd = n2
-                heuristicVal += util.manhattanDistance(n1, n2)
+                heuristicVal += euclidieanDistance(n1, n2)
                 break
 
     return heuristicVal
+
+def euclidieanDistance (pointA, pointB):
+    dx = pointA[0] - pointB[0]
+    dy = pointA[1] - pointB[1]
+    return math.sqrt(dx * dx + dy * dy)
 
 
 class AStarCornersAgent(SearchAgent):
@@ -550,8 +556,8 @@ def foodHeuristic(state, problem):
     # ************************************************
     # Prim's minimum spanning tree   7162 nodes expanded
     # ************************************************
-    manDistance = lambda pair : util.manhattanDistance(pair[0], pair[1])
-    edgeQueue = util.PriorityQueueWithFunction(manDistance)
+    eucDistance = lambda pair : euclidieanDistance(pair[0], pair[1])
+    edgeQueue = util.PriorityQueueWithFunction(eucDistance)
 
     visited = [position]
     newAdd = position
@@ -570,7 +576,7 @@ def foodHeuristic(state, problem):
                 visited.append(n2)
                 foodset.remove(n2)
                 newAdd = n2
-                heuristicVal += util.manhattanDistance(n1, n2)
+                heuristicVal += euclidieanDistance(n1, n2)
                 break
 
     return heuristicVal
