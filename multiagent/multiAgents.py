@@ -15,6 +15,7 @@
 from util import manhattanDistance
 from game import Directions
 import random, util
+import math
 
 from game import Agent
 
@@ -74,7 +75,55 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        #return successorGameState.getScore()
+
+        # given state and action, try to decrease food num and avoid ghost
+        if newFood.count == 0:
+            return 0
+
+        # find the distance to the nearest food
+        walls = currentGameState.getWalls()
+        dist = 0
+        visited = []
+        frontier = util.Queue()
+        frontier.push((newPos, 0))
+        while not frontier.isEmpty():
+            pos, level = frontier.pop()
+            if pos in visited:
+                continue
+            visited.append(pos)
+
+            x = pos[0]
+            y = pos[1]
+            if newFood[x][y]:
+                dist = level
+                break
+
+            if not walls[x + 1][y] and (x + 1, y) not in visited:
+                frontier.push(((x + 1, y), level + 1))
+            if not walls[x - 1][y] and (x - 1, y) not in visited:
+                frontier.push(((x - 1, y), level + 1))
+            if not walls[x][y + 1] and (x, y + 1) not in visited:
+                frontier.push(((x, y + 1), level + 1))
+            if not walls[x][y - 1] and (x, y - 1) not in visited:
+                frontier.push(((x, y - 1), level + 1))
+
+        #print dist
+
+        # penalty if inside ghost's range, TODO maze distance instead of manh
+        penalty = 0
+        for ghostState in newGhostStates:
+            if ghostState.scaredTimer < 5:
+                manDis = manhattanDistance(ghostState.getPosition(), newPos)
+                if manDis < 4:
+                    penalty += math.pow(3, (4 - manDis))
+
+
+        # smaller food count, smaller distance, smaller penalty, the better
+        return -newFood.count() - dist * 0.1 - penalty
+
+        # TODO eat scared ghost
+
 
 def scoreEvaluationFunction(currentGameState):
     """
