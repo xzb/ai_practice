@@ -78,15 +78,27 @@ class ReflexAgent(Agent):
         #return successorGameState.getScore()
 
         # given state and action, try to decrease food num and avoid ghost
-        if newFood.count == 0:
+        if newFood.count() == 0:
             return 0
+
+        # parameters
+        GHOST_DANGER_DISTANCE = 4
+        GHOST_SCARED_TIME_THRED = 4
 
         # find the distance to the nearest food
         walls = currentGameState.getWalls()
-        dist = 0
+        distToFood = 0
         visited = []
         frontier = util.Queue()
         frontier.push((newPos, 0))
+
+        distToGhost = []
+        ghostPos = []
+        ghostCount = len(newGhostStates)
+        for ghostState in newGhostStates:
+            if ghostState.scaredTimer < GHOST_SCARED_TIME_THRED:
+                ghostPos.append(ghostState.getPosition())
+
         while not frontier.isEmpty():
             pos, level = frontier.pop()
             if pos in visited:
@@ -95,8 +107,12 @@ class ReflexAgent(Agent):
 
             x = pos[0]
             y = pos[1]
-            if newFood[x][y]:
-                dist = level
+            if newFood[x][y] and distToFood == 0:
+                distToFood = level
+            if pos in ghostPos:
+                distToGhost.append(level)
+            if distToFood > 0 and (len(distToGhost) == ghostCount or level > GHOST_DANGER_DISTANCE):
+                #print "level ", level, ", distFood ", distToFood, ", ghostNum", len(distToGhost)
                 break
 
             if not walls[x + 1][y] and (x + 1, y) not in visited:
@@ -108,22 +124,32 @@ class ReflexAgent(Agent):
             if not walls[x][y - 1] and (x, y - 1) not in visited:
                 frontier.push(((x, y - 1), level + 1))
 
-        #print dist
 
-        # penalty if inside ghost's range, TODO maze distance instead of manh
+        # penalty if inside ghost's range, maze distance instead of manh
         penalty = 0
-        for ghostState in newGhostStates:
-            if ghostState.scaredTimer < 5:
-                manDis = manhattanDistance(ghostState.getPosition(), newPos)
-                if manDis < 4:
-                    penalty += math.pow(3, (4 - manDis))
+        #for ghostState in newGhostStates:
+        #    if ghostState.scaredTimer < GHOST_SCARED_TIME_THRED:
+        #        manDis = manhattanDistance(ghostState.getPosition(), newPos)
+        #        if manDis < GHOST_DANGER_DISTANCE:
+        #            penalty += math.pow(3, (GHOST_DANGER_DISTANCE - manDis))
+        for mazeDist in distToGhost:
+            penalty += math.pow(3, (GHOST_DANGER_DISTANCE - mazeDist))
 
+        # last two food issue
+        currentFoodCnt = currentGameState.getFood().count()
+        if newFood.count() < currentFoodCnt:   # this action will eat a food
+            distToFood = 0
 
         # smaller food count, smaller distance, smaller penalty, the better
-        return -newFood.count() - dist * 0.1 - penalty
+        evaluation = -newFood.count() - distToFood * 0.1 - penalty
+        #print "Action ", action, ", Evaluation ", evaluation
+        return evaluation
 
         # TODO eat scared ghost
-
+        # TODO corner location issue
+        #penaltyForStop = 0
+        #if action == Directions.STOP:
+        #    penaltyForStop = 10
 
 def scoreEvaluationFunction(currentGameState):
     """
