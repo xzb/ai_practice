@@ -177,6 +177,7 @@ class MultiAgentSearchAgent(Agent):
     """
 
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
+    #def __init__(self, evalFn = 'betterEvaluationFunction', depth = '2'):
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
@@ -420,7 +421,94 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #util.raiseNotDefined()
+
+    # ===========================================
+    # below implementation is almost the same as ReflexAgent.evaluationFunction,
+    #
+    # ===========================================
+    # Useful information you can extract from a GameState (pacman.py)
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+
+    # given state and action, try to decrease food num and avoid ghost
+    if newFood.count() == 0:
+        return 0
+
+    # parameters
+    GHOST_DANGER_DISTANCE = 4
+    GHOST_SCARED_TIME_THRED = 4
+
+    # find the distance to the nearest food
+    walls = currentGameState.getWalls()
+    distToFood = 0
+    visited = []
+    frontier = util.Queue()
+    frontier.push((newPos, 0))
+
+    distToGhost = []
+    ghostPos = []
+    ghostCount = len(newGhostStates)
+    for ghostState in newGhostStates:
+        if ghostState.scaredTimer < GHOST_SCARED_TIME_THRED:
+            ghostPos.append(ghostState.getPosition())
+
+    while not frontier.isEmpty():
+        pos, level = frontier.pop()
+        if pos in visited:
+            continue
+        visited.append(pos)
+
+        x = pos[0]
+        y = pos[1]
+        if newFood[x][y] and distToFood == 0:
+            distToFood = level
+        if pos in ghostPos:
+            distToGhost.append(level)
+        if distToFood > 0 and (len(distToGhost) == ghostCount or level > GHOST_DANGER_DISTANCE):
+            #print "level ", level, ", distFood ", distToFood, ", ghostNum", len(distToGhost)
+            break
+
+        if not walls[x + 1][y] and (x + 1, y) not in visited:
+            frontier.push(((x + 1, y), level + 1))
+        if not walls[x - 1][y] and (x - 1, y) not in visited:
+            frontier.push(((x - 1, y), level + 1))
+        if not walls[x][y + 1] and (x, y + 1) not in visited:
+            frontier.push(((x, y + 1), level + 1))
+        if not walls[x][y - 1] and (x, y - 1) not in visited:
+            frontier.push(((x, y - 1), level + 1))
+
+
+    # penalty if inside ghost's range, maze distance instead of manh
+    penalty = 0
+    #for ghostState in newGhostStates:
+    #    if ghostState.scaredTimer < GHOST_SCARED_TIME_THRED:
+    #        manDis = manhattanDistance(ghostState.getPosition(), newPos)
+    #        if manDis < GHOST_DANGER_DISTANCE:
+    #            penalty += math.pow(3, (GHOST_DANGER_DISTANCE - manDis))
+    for mazeDist in distToGhost:
+        penalty += math.pow(3, (GHOST_DANGER_DISTANCE - mazeDist))
+
+    # last two food issue
+    currentFoodCnt = currentGameState.getFood().count()
+    if newFood.count() < currentFoodCnt:   # this action will eat a food
+        distToFood = 0
+
+    # smaller food count, smaller distance, smaller penalty, the better
+    evaluation = -newFood.count() - distToFood * 0.1 - penalty
+    #print "Action ", action, ", Evaluation ", evaluation
+    return evaluation
+
+    # TODO eat scared ghost
+    # TODO eat capsules
+    #print currentGameState.getCapsules()
+    # TODO corner location issue
+    #penaltyForStop = 0
+    #if action == Directions.STOP:
+    #    penaltyForStop = 10
 
 # Abbreviation
 better = betterEvaluationFunction
