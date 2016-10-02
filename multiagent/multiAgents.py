@@ -352,7 +352,65 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        # ===========================================
+        # below implementation is almost the same as MinimaxAgent,
+        # only difference is average ghost score instead of find min
+        # ===========================================
+        # legalActions = gameState.getLegalActions(0)
+        # pacmanState = gameState.generateSuccessor(0, legalActions[0])
+        if debug: print "Agent Num: ", gameState.getNumAgents()
+        if debug: print "DEPTH: ", self.depth
+        if debug: print "Evaluation: ", self.evaluationFunction(gameState)
+
+        v, action = self.maxValue(gameState, 0)
+        if debug: print v, " ", action
+        return action
+
+    def maxValue(self, gameState, curDepth):
+        # Termination case 1
+        if curDepth == self.depth:                      # Leaf is always max node
+            return self.evaluationFunction(gameState), Directions.STOP
+        # Termination case 2: pacman don't have legal moves
+        legalActions = gameState.getLegalActions(0)
+        if debug: print "pacman actions: ", legalActions
+        if len(legalActions) == 0:
+            return self.expValue(gameState, curDepth, 1), Directions.STOP
+
+        v = float("-inf")
+        maxAction = Directions.STOP
+        for action in legalActions:
+            successorState = gameState.generateSuccessor(0, action)
+            sv = self.expValue(successorState, curDepth, 1)         # index 1 for the first ghost
+            if debug: print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
+            if sv > v:
+                v = sv
+                maxAction = action
+        return v, maxAction
+
+    def expValue(self, gameState, curDepth, ghostId):
+        agentNum = gameState.getNumAgents()
+        # Termination case 1
+        if ghostId == agentNum:
+            v, action = self.maxValue(gameState, curDepth + 1)      # increase depth
+            return v
+        # Termination case 2: ghost doesn't have legal moves, try next ghost
+        legalActions = gameState.getLegalActions(ghostId)
+        if debug: print "ghost actions: ", legalActions
+        if len(legalActions) == 0:
+            return self.expValue(gameState, curDepth, ghostId + 1)
+
+        weight = 1.0 / len(legalActions)
+        v = 0
+        for action in legalActions:
+            successorState = gameState.generateSuccessor(ghostId, action)
+            sv = self.expValue(successorState, curDepth, ghostId + 1)   # find min for next ghost
+            if debug: print "exp: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
+            # ==average score==
+            v += sv * weight
+        return v
+
 
 def betterEvaluationFunction(currentGameState):
     """
