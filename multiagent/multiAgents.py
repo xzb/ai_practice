@@ -206,34 +206,32 @@ class MinimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         #util.raiseNotDefined()
 
-        # agentNum = gameState.getNumAgents()
-        # =post order search
         # legalActions = gameState.getLegalActions(0)
         # pacmanState = gameState.generateSuccessor(0, legalActions[0])
-        # print agentNum, " ", legalActions[0], " ", self.depth, " ", self.evaluationFunction(pacmanState)
-
-        print "DEPTH: ", self.depth
-        print "Agent Num: ", gameState.getNumAgents()
+        if debug: print "Agent Num: ", gameState.getNumAgents()
+        if debug: print "DEPTH: ", self.depth
+        if debug: print "Evaluation: ", self.evaluationFunction(gameState)
 
         v, action = self.maxValue(gameState, 0)
-        print v, " ", action
+        if debug: print v, " ", action
         return action
 
     def maxValue(self, gameState, curDepth):
         # Termination case 1
         if curDepth == self.depth:                      # Leaf is always max node
             return self.evaluationFunction(gameState), Directions.STOP
-        # Termination case 2
-
-        #v = float("-inf")
-        v = -100000
+        # Termination case 2: pacman don't have legal moves
         legalActions = gameState.getLegalActions(0)
-        print "pacman actions: ", legalActions
+        if debug: print "pacman actions: ", legalActions
+        if len(legalActions) == 0:
+            return self.minValue(gameState, curDepth, 1), Directions.STOP
+
+        v = float("-inf")
         maxAction = Directions.STOP
         for action in legalActions:
             successorState = gameState.generateSuccessor(0, action)
             sv = self.minValue(successorState, curDepth, 1)         # index 1 for the first ghost
-            print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
+            if debug: print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
             if sv > v:
                 v = sv
                 maxAction = action
@@ -241,25 +239,26 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     def minValue(self, gameState, curDepth, ghostId):
         agentNum = gameState.getNumAgents()
-        print ghostId, " ", agentNum
         # Termination case 1
         if ghostId == agentNum:
             v, action = self.maxValue(gameState, curDepth + 1)      # increase depth
             return v
-        # Termination case 2
-
-
-        #v = float("inf")
-        v = 100000
+        # Termination case 2: ghost doesn't have legal moves, try next ghost
         legalActions = gameState.getLegalActions(ghostId)
-        print "ghost actions: ", legalActions
+        if debug: print "ghost actions: ", legalActions
+        if len(legalActions) == 0:
+            return self.minValue(gameState, curDepth, ghostId + 1)
+
+        v = float("inf")
         for action in legalActions:
             successorState = gameState.generateSuccessor(ghostId, action)
             sv = self.minValue(successorState, curDepth, ghostId + 1)   # find min for next ghost
-            print "min: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
+            if debug: print "min: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
             if sv < v:
                 v = sv
         return v
+
+debug = False
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
