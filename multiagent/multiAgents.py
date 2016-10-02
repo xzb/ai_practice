@@ -177,7 +177,7 @@ class MultiAgentSearchAgent(Agent):
     """
 
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-    #def __init__(self, evalFn = 'betterEvaluationFunction', depth = '2'):
+    #def __init__(self, evalFn = 'betterEvaluationFunction', depth = '2'):      # debug betterEvaluationFunction
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
@@ -233,7 +233,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             successorState = gameState.generateSuccessor(0, action)
             sv = self.minValue(successorState, curDepth, 1)         # index 1 for the first ghost
             if debug: print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
-            if sv > v:
+            if sv > v or (sv == v and maxAction == Directions.STOP):    # avoid STOP if same value
                 v = sv
                 maxAction = action
         return v, maxAction
@@ -304,7 +304,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             successorState = gameState.generateSuccessor(0, action)
             sv = self.minValue(successorState, curDepth, 1, alpha, beta)         # index 1 for the first ghost
             if debug: print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
-            if sv > v:
+            if sv > v or (sv == v and maxAction == Directions.STOP):    # avoid STOP if same value
                 v = sv
                 maxAction = action
             # ==alpha-beta pruning==
@@ -385,7 +385,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             successorState = gameState.generateSuccessor(0, action)
             sv = self.expValue(successorState, curDepth, 1)         # index 1 for the first ghost
             if debug: print "max: depth ", curDepth, " action ", action, " sv ", sv, " v ", v
-            if sv > v:
+            if sv > v or (sv == v and maxAction == Directions.STOP):    # avoid STOP if same value
                 v = sv
                 maxAction = action
         return v, maxAction
@@ -419,13 +419,20 @@ def betterEvaluationFunction(currentGameState):
       evaluation function (question 5).
 
       DESCRIPTION: <write something here so we know what you did>
+      Evaluation combine four factors:
+      1. remaining food count,
+      2. remaining capsule count,
+      3. distance to nearest food,
+      4. penalty inside ghost danger range
+      The smaller value of above factors, higher evaluation score.
+      Does not try to eat scared ghost.
     """
     "*** YOUR CODE HERE ***"
     #util.raiseNotDefined()
 
     # ===========================================
     # below implementation is almost the same as ReflexAgent.evaluationFunction,
-    #
+    # add capsule factor
     # ===========================================
     # Useful information you can extract from a GameState (pacman.py)
     newPos = currentGameState.getPacmanPosition()
@@ -433,9 +440,9 @@ def betterEvaluationFunction(currentGameState):
     newGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-
     # given state and action, try to decrease food num and avoid ghost
     if newFood.count() == 0:
+        if debug: print "Pos ", newPos, "Eval ", newFood.count()
         return 0
 
     # parameters
@@ -492,19 +499,19 @@ def betterEvaluationFunction(currentGameState):
     for mazeDist in distToGhost:
         penalty += math.pow(3, (GHOST_DANGER_DISTANCE - mazeDist))
 
-    # last two food issue
-    currentFoodCnt = currentGameState.getFood().count()
-    if newFood.count() < currentFoodCnt:   # this action will eat a food
-        distToFood = 0
+    # last two food issue, SOLVED by change weight of distance to 0.01
+
+    # expectimax depth 2 last food stop issue, SOLVED in agent, avoid STOP if same max
+
+    # ==eat capsules==
+    capsuleNum = len(currentGameState.getCapsules())
 
     # smaller food count, smaller distance, smaller penalty, the better
-    evaluation = -newFood.count() - distToFood * 0.1 - penalty
-    #print "Action ", action, ", Evaluation ", evaluation
+    evaluation = -newFood.count() - capsuleNum * 2 - distToFood * 0.01 - penalty
+    if debug: print "Pos ", newPos, ", Eval ", evaluation
     return evaluation
 
     # TODO eat scared ghost
-    # TODO eat capsules
-    #print currentGameState.getCapsules()
     # TODO corner location issue
     #penaltyForStop = 0
     #if action == Directions.STOP:
