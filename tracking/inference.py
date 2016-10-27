@@ -168,7 +168,7 @@ class ExactInference(InferenceModule):
                 allPossible[p] = 0
             else:
                 trueDistance = util.manhattanDistance(p, pacmanPosition)
-                allPossible[p] = self.beliefs[p] * emissionModel[trueDistance]      # transition is fixed
+                allPossible[p] = self.beliefs[p] * emissionModel[trueDistance]      # transition is done at elapseTime
 
         if noisyDistance == None:
             allPossible[self.getJailPosition()] = 1
@@ -245,7 +245,7 @@ class ExactInference(InferenceModule):
             for newPos in self.legalPositions:
                 newPosDist[newPos] += self.beliefs[oldPos] * trans[newPos]          # old position prob * trans, sum up
 
-        newPosDist.normalize()
+        #newPosDist.normalize()             # may not need
         self.beliefs = newPosDist
 
     def getBeliefDistribution(self):
