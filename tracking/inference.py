@@ -149,16 +149,30 @@ class ExactInference(InferenceModule):
         pacmanPosition = gameState.getPacmanPosition()
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
 
         # Replace this code with a correct observation update
         # Be sure to handle the "jail" edge case where the ghost is eaten
         # and noisyDistance is None
+        #allPossible = util.Counter()
+        #for p in self.legalPositions:
+        #    trueDistance = util.manhattanDistance(p, pacmanPosition)
+        #    if emissionModel[trueDistance] > 0:
+        #        allPossible[p] = 1.0                                   # uniform of all legal positions
+
+
+        #allPossible = self.beliefs                                      # reference, not deep copy
         allPossible = util.Counter()
         for p in self.legalPositions:
-            trueDistance = util.manhattanDistance(p, pacmanPosition)
-            if emissionModel[trueDistance] > 0:
-                allPossible[p] = 1.0
+            if noisyDistance == None:
+                allPossible[p] = 0
+            else:
+                trueDistance = util.manhattanDistance(p, pacmanPosition)
+                allPossible[p] = self.beliefs[p] * emissionModel[trueDistance]      # transition is fixed
+
+        if noisyDistance == None:
+            allPossible[self.getJailPosition()] = 1
+
 
         "*** END YOUR CODE HERE ***"
 
@@ -219,7 +233,20 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+
+        newPosDist = util.Counter()
+        for p in self.legalPositions:
+            newPosDist[p] = 0
+
+        for oldPos in self.legalPositions:
+            trans = self.getPositionDistribution(self.setGhostPosition(gameState, oldPos))
+            for newPos in self.legalPositions:
+                newPosDist[newPos] += self.beliefs[oldPos] * trans[newPos]          # old position prob * trans, sum up
+
+        newPosDist.normalize()
+        self.beliefs = newPosDist
 
     def getBeliefDistribution(self):
         return self.beliefs
