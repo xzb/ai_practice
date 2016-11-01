@@ -281,6 +281,13 @@ class ParticleFilter(InferenceModule):
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
+        #print self.numParticles
+        #print self.legalPositions
+
+        numPos = len(self.legalPositions)
+        dist = [1.0 for i in range(numPos)]
+        self.particleList = util.nSample(dist, self.legalPositions, self.numParticles)
+
 
     def observe(self, observation, gameState):
         """
@@ -313,7 +320,22 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        if noisyDistance == None:
+            self.particleList = [self.getJailPosition() for i in range(self.numParticles)]      # all particles in jail
+            return
+
+        dist = []                                           # weight of particles after observed
+        for particle in self.particleList:
+            trueDistance = util.manhattanDistance(particle, pacmanPosition)
+            dist.append(emissionModel[trueDistance])        # transition is done at elapseTime
+
+        if sum(dist) == 0:
+            self.initializeUniformly(gameState)
+        else:
+            self.particleList = util.nSample(dist, self.particleList, self.numParticles)        # resample
+
 
     def elapseTime(self, gameState):
         """
@@ -330,7 +352,15 @@ class ParticleFilter(InferenceModule):
         a belief distribution.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        newParticleList = []
+        for oldPos in self.particleList:
+            trans = self.getPositionDistribution(self.setGhostPosition(gameState, oldPos))  # prob of successor position of each particle
+            newParticleList.append(util.sample(trans))                                      # generate one transition particle
+
+        self.particleList = newParticleList
+
 
     def getBeliefDistribution(self):
         """
@@ -340,7 +370,18 @@ class ParticleFilter(InferenceModule):
         Counter object)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        belief = util.Counter()
+        for particle in self.particleList:
+            if particle not in belief:
+                belief[particle] = 1
+            else:
+                belief[particle] = belief[particle] + 1
+
+        return util.normalize(belief)
+
+
 
 class MarginalInference(InferenceModule):
     """
