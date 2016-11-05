@@ -539,18 +539,20 @@ class JointParticleFilter:
                     trueDistance = util.manhattanDistance(particle[gid], pacmanPosition)
                     productOfObservation *= emissionModels[gid][trueDistance]
             dist.append(productOfObservation)
+        dist = util.normalize(dist)
 
         if sum(dist) == 0:
             self.initializeParticles()
             self.updateGhostInJail(noisyDistances)
         else:
-            # TODO
-            self.particleList = util.nSample(dist, self.particleList, self.numParticles)        # resample
-            #temp = []
-            #for _ in range(0, self.numParticles):
-            #    temp.append(util.sample(dist, self.particleList))                  # timeout!!
-            #self.particleList = temp
-
+            cumu, cumuDist = 0, []
+            for d in dist:
+                cumu += d
+                cumuDist.append(cumu)
+            temp = []
+            for _ in range(0, self.numParticles):
+                temp.append(fastSample(cumuDist, self.particleList))        # resample particles w.r.t. weights
+            self.particleList = temp
 
     def updateGhostInJail(self, noisyDistances):
         for gid in range(self.numGhosts):
@@ -662,3 +664,15 @@ def setGhostPositions(gameState, ghostPositions):
         gameState.data.agentStates[index + 1] = game.AgentState(conf, False)
     return gameState
 
+# generate one sample using O(logN) time
+def fastSample(cumuDistribution, values):
+    choice = random.random()
+    # find the ceil of choice
+    l, r = 0, len(cumuDistribution) - 1
+    while l < r:
+        mid = (l + r) / 2
+        if cumuDistribution[mid] >= choice:
+            r = mid
+        else:
+            l = mid + 1
+    return values[l]
