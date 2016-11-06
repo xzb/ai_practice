@@ -284,17 +284,18 @@ class ParticleFilter(InferenceModule):
         #print self.numParticles
         #print self.legalPositions
 
-        numPos = len(self.legalPositions)
-        dist = [1.0 for i in range(numPos)]
-        self.particleList = util.nSample(dist, self.legalPositions, self.numParticles)
+        #numPos = len(self.legalPositions)
+        #dist = [1.0 for i in range(numPos)]
+        #self.particleList = util.nSample(dist, self.legalPositions, self.numParticles)     # though work, does not pass test
 
-        # TODO
-        #count, self.particleList = 0, []
-        #while count < self.numParticles:
-        #    for position in self.legalPositions:
-        #        if count < self.numParticles:
-        #            self.particleList.append(position)
-        #            count += 1
+        count, self.particleList = 0, []
+        while count < self.numParticles:
+            for position in self.legalPositions:            # add position evenly
+                if count < self.numParticles:
+                    self.particleList.append(position)
+                    count += 1
+                else:
+                    break
 
 
     def observe(self, observation, gameState):
@@ -466,13 +467,12 @@ class JointParticleFilter:
         #possPositions = list(itertools.product(self.legalPositions, repeat = self.numGhosts))
         #random.shuffle(possPositions)
 
-        numPos = len(self.legalPositions) * 2
-        dist = [1.0 for i in range(numPos)]
         tuplePositions = [(x,y) for x in self.legalPositions for y in self.legalPositions]
         random.shuffle(tuplePositions)
-        #self.particleList = util.nSample(dist, tuplePositions, self.numParticles)
+        #numPos = len(self.legalPositions) * 2
+        #dist = [1.0 for i in range(numPos)]
+        #self.particleList = util.nSample(dist, tuplePositions, self.numParticles)      # does not pass test
 
-        # TODO
         count, self.particleList = 0, []
         while count < self.numParticles:
             for position in tuplePositions:
