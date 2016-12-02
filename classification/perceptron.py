@@ -55,7 +55,28 @@ class PerceptronClassifier:
             print "Starting iteration ", iteration, "..."
             for i in range(len(trainingData)):
                 "*** YOUR CODE HERE ***"
-                util.raiseNotDefined()
+                #util.raiseNotDefined()
+
+                #maxScore = float('-inf')
+                #estLabel = self.legalLabels[0]
+                #for l in self.legalLabels:
+                #    score = self.weights[l] * trainingData[i]
+                #    if score > maxScore:
+                #        maxScore = score
+                #        estLabel = l
+
+                #== find the label that has max score
+                scores = util.Counter()
+                for l in self.legalLabels:
+                    scores[l] = self.weights[l] * trainingData[i]
+                estLabel = scores.argMax()
+
+                #== if estLabel is different from trainingLabel, need to update weight
+                if estLabel != trainingLabels[i]:
+                    self.weights[trainingLabels[i]] += trainingData[i]
+                    self.weights[estLabel] -= trainingData[i]           # wrong label
+
+
 
     def classify(self, data ):
         """
@@ -80,6 +101,8 @@ class PerceptronClassifier:
         featuresWeights = []
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        featuresWeights = self.weights[label].sortedKeys()[:100]
 
         return featuresWeights
