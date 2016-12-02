@@ -61,7 +61,72 @@ class MiraClassifier:
         representing a vector of values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        #print trainingData[0]
+        #print self.weights
+        #guesses = self.classify(trainingData)
+        #print "guesses: ", guesses
+
+        #guesses = []
+        #for i in range(len(trainingData)):
+        #    scores = util.Counter()
+        #    for l in self.legalLabels:
+        #        scores[l] = self.weights[l] * trainingData[i]
+        #    guesses.append(scores.argMax())
+
+        print Cgrid
+
+        validationError = float('inf')
+        originW = self.weights.copy()
+        bestW = None
+        for C in Cgrid:
+            for iteration in range(self.max_iterations):
+                print "Starting iteration ", iteration, "..."
+                for i in range(len(trainingData)):
+                    f = trainingData[i]
+                    actual = trainingLabels[i]
+                    #== find the label with max score
+                    scores = util.Counter()
+                    for l in self.legalLabels:
+                        scores[l] = self.weights[l] * f
+                    guess = scores.argMax()
+
+                    #== if estLabel is different from trainingLabel, need to update weight
+                    if guess != actual:
+                        # calculate tao
+                        wrongw = self.weights[guess]
+                        rightw = self.weights[actual]
+                        tao = ((wrongw - rightw) * f + 1.0) / (f * f * 2)
+                        tao = min(C, tao)
+
+                        learningStep = f.copy()
+                        for key in learningStep:
+                            learningStep[key] *= tao
+
+                        self.weights[actual] += learningStep
+                        self.weights[guess] -= learningStep         # wrong label
+
+
+            #== for each C, save weight if it has min validation error
+            error = self.validate(validationData, validationLabels)
+            if error < validationError:
+                validationError = error
+                bestW = self.weights.copy()
+                print "use C: ", C
+            self.weights = originW.copy()                       # reset for next C
+
+        #== save the best weights
+        self.weights = bestW
+
+
+    def validate(self, validationData, validationLabels):
+        guesses = self.classify(validationData)
+        error = 0
+        for i in range(len(guesses)):
+            if guesses[i] != validationLabels[i]:
+                error += 1
+        return error
 
     def classify(self, data ):
         """
