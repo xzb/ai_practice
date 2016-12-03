@@ -72,8 +72,14 @@ def enhancedFeatureExtractorDigit(datum):
     for this datum (datum is of type samples.Datum).
 
     ## DESCRIBE YOUR ENHANCED FEATURES HERE...
-        Count separate areas on two columns
-        [3/8,5/8] 83%, 80%
+        1.traverse a column of digit, find how many parts of black/gray pixels
+         [3/8,5/8] 83%, 80%
+        2.traverse a row of digit, find how many parts of black/gray pixels
+         [3/8,2/3] 86%, 83%
+        3.restrain the area by the range bound of black/gray pixels
+         84%, 84%
+
+        4.to be done: ratio of two halfs
     ##
     """
     features =  basicFeatureExtractorDigit(datum)
@@ -82,9 +88,39 @@ def enhancedFeatureExtractorDigit(datum):
     #util.raiseNotDefined()
     #print datum.getAsciiString()
 
+    #== find range bound of black/gray pixels
+    cumuColumn = [0 for x in range(DIGIT_DATUM_WIDTH)]
+    cumuRow = [0 for y in range(DIGIT_DATUM_HEIGHT)]
+    for x in range(DIGIT_DATUM_WIDTH):
+        for y in range(DIGIT_DATUM_HEIGHT):
+            if datum.getPixel(x, y) > 0:
+                cumuColumn[x] += 1
+                cumuRow[y] += 1
+    lbound, rbound, ubound, bbound = 0, 0, 0, 0
+    for x in range(DIGIT_DATUM_WIDTH):
+        if cumuColumn[x] > 0:
+            lbound = x
+            break
+    for x in range(DIGIT_DATUM_WIDTH - 1, -1, -1):
+        if cumuColumn[x] > 0:
+            rbound = x
+            break
+    for y in range(DIGIT_DATUM_HEIGHT):
+        if cumuRow[y] > 0:
+            ubound = y
+            break
+    for y in range(DIGIT_DATUM_HEIGHT - 1, -1, -1):
+        if cumuRow[y] > 0:
+            bbound = y
+            break
+    #print lbound, rbound, ubound, bbound
+
+
     maxCount = 5
-    columns = [DIGIT_DATUM_WIDTH * 3 / 8, DIGIT_DATUM_WIDTH * 5 / 8]    # two columns
-    rows = [DIGIT_DATUM_HEIGHT * 3 / 8, DIGIT_DATUM_HEIGHT * 2 / 3]     # two rows
+    #columns = [DIGIT_DATUM_WIDTH * 3 / 8, DIGIT_DATUM_WIDTH * 5 / 8]    # two columns
+    #rows = [DIGIT_DATUM_HEIGHT * 3 / 8, DIGIT_DATUM_HEIGHT * 2 / 3]     # two rows
+    columns = [lbound + (rbound - lbound) / 2]  #, lbound + (rbound - lbound) * 2 / 3]
+    rows = [ubound + (bbound - ubound) / 4, ubound + (bbound - ubound) * 3 / 4]
 
     #== traverse two columns and count separate areas
     for x in columns:
@@ -97,9 +133,9 @@ def enhancedFeatureExtractorDigit(datum):
                     count += 1
             elif hasPixel:                          # next area of blanks
                 hasPixel = False
-        #print x, " ", count
+        #print "c", x, count
 
-        for fcount in range(maxCount):
+        for fcount in range(1, maxCount):
             if fcount == count:
                 features[('c' + str(x), fcount)] = 1         # binary feature
             else:
@@ -116,29 +152,13 @@ def enhancedFeatureExtractorDigit(datum):
                     count += 1
             elif hasPixel:
                 hasPixel = False
+        #print "r", y, count
 
-        for fcount in range(maxCount):
+        for fcount in range(1, maxCount):
             if fcount == count:
                 features[('r' + str(y), fcount)] = 1
             else:
                 features[('r' + str(y), fcount)] = 0
-
-    #== get black pixel counts
-    # points = 0
-    # buckets = 10
-    # bucketSize = DIGIT_DATUM_WIDTH * DIGIT_DATUM_HEIGHT / 3 / buckets
-    # for x in range(DIGIT_DATUM_WIDTH):
-    #     for y in range(DIGIT_DATUM_HEIGHT):
-    #         if datum.getPixel(x, y) > 0:
-    #             points += 1
-    # print "bucket", points / bucketSize
-    # for bucket in range(buckets):
-    #     if points / bucketSize == bucket:       # the amount of buckets will set 1
-    #         features[('b', bucket)] = 1
-    #     else:
-    #         features[('b', bucket)] = 0
-    # if points / bucketSize >= buckets:          # in case points exceed all buckets
-    #     features[('b', buckets - 1)] = 1
 
 
     return features
