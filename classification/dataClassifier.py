@@ -202,12 +202,91 @@ def enhancedPacmanFeatures(state, action):
     """
     For each state, this function is called with each legal action.
     It should return a counter with { <feature name> : <feature value>, ... }
+
+    Results of basic feature with foodCount
+    StopAgent 100%, 100%
+    FoodAgent 80.1%, 80.5%      -> 84.1%, 84.5% 'distToFood'
+    SuicideAgent 68.7%, 72.5%   -> 84.7%, 83.3% 'towardsGhost'
+    ContestAgent 79.8%, 82.8%   -> 93.5%, 95.1% 'distToFood'
+
     """
     features = util.Counter()
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #util.raiseNotDefined()
+
+    successor = state.generateSuccessor(0, action)
+    pos = state.getPacmanPosition()
+    newPos = successor.getPacmanPosition()
+    numAgents = state.getNumAgents()
+
+
+    #== find whether pacman walk towards nearest ghost
+    minDist = float('inf')
+    nearestGPos = None
+    for gid in range(1, numAgents):
+        ghostPos = state.getGhostPosition(gid)
+        dist = util.manhattanDistance(pos, ghostPos)
+        if dist < minDist:
+            minDist = dist
+            nearestGPos = ghostPos
+    newDisToNearestGhost = util.manhattanDistance(newPos, nearestGPos)
+    features['towardsGhost'] = newDisToNearestGhost < util.manhattanDistance(pos, nearestGPos)
+    #print "towardsGhost",features['towardsGhost']
+
+    #== walk towards food
+    #features['towardsFood'] = successor.getNumFood() < state.getNumFood()
+
+    #== distance towards nearest food
+    features['distToFood'] = findDistToNearestFood(state, action)
+
+    #== save distance to nearest ghost
+    #features['disToGhost'] = newDisToNearestGhost
+
     return features
 
+def findDistToNearestFood(currentGameState, action):
+    # ******************************
+    # find the distance to the nearest food
+    # copy code from ReflexAgent.evaluationFunction() in multiagent project
+    # ******************************
+    successorGameState = currentGameState.generatePacmanSuccessor(action)
+    newPos = successorGameState.getPacmanPosition()
+    newFood = successorGameState.getFood()
+
+    if newFood.count() == 0:
+        return 0
+
+    walls = currentGameState.getWalls()
+    distToFood = 0
+    visited = []
+    frontier = util.Queue()
+    frontier.push((newPos, 0))
+
+    while not frontier.isEmpty():
+        pos, level = frontier.pop()
+        if pos in visited:
+            continue
+        visited.append(pos)
+
+        x = pos[0]
+        y = pos[1]
+        if newFood[x][y] and distToFood == 0:
+            distToFood = level
+        if distToFood > 0:
+            #print "level ", level, ", distFood ", distToFood, ", ghostNum", len(distToGhost)
+            break
+
+        if not walls[x + 1][y] and (x + 1, y) not in visited:
+            frontier.push(((x + 1, y), level + 1))
+        if not walls[x - 1][y] and (x - 1, y) not in visited:
+            frontier.push(((x - 1, y), level + 1))
+        if not walls[x][y + 1] and (x, y + 1) not in visited:
+            frontier.push(((x, y + 1), level + 1))
+        if not walls[x][y - 1] and (x, y - 1) not in visited:
+            frontier.push(((x, y - 1), level + 1))
+
+    return distToFood
+    
 
 def contestFeatureExtractorDigit(datum):
     """
