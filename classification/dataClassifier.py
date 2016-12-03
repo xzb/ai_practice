@@ -72,13 +72,74 @@ def enhancedFeatureExtractorDigit(datum):
     for this datum (datum is of type samples.Datum).
 
     ## DESCRIBE YOUR ENHANCED FEATURES HERE...
-
+        Count separate areas on two columns
+        [3/8,5/8] 83%, 80%
     ##
     """
     features =  basicFeatureExtractorDigit(datum)
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #util.raiseNotDefined()
+    #print datum.getAsciiString()
+
+    maxCount = 5
+    columns = [DIGIT_DATUM_WIDTH * 3 / 8, DIGIT_DATUM_WIDTH * 5 / 8]    # two columns
+    rows = [DIGIT_DATUM_HEIGHT * 3 / 8, DIGIT_DATUM_HEIGHT * 2 / 3]     # two rows
+
+    #== traverse two columns and count separate areas
+    for x in columns:
+        count = 0
+        hasPixel = False
+        for y in range(DIGIT_DATUM_HEIGHT):
+            if datum.getPixel(x, y) > 0:
+                if not hasPixel:                    # next area of pixels
+                    hasPixel = True
+                    count += 1
+            elif hasPixel:                          # next area of blanks
+                hasPixel = False
+        #print x, " ", count
+
+        for fcount in range(maxCount):
+            if fcount == count:
+                features[('c' + str(x), fcount)] = 1         # binary feature
+            else:
+                features[('c' + str(x), fcount)] = 0
+
+    #== traverse two rows and count separate areas
+    for y in rows:
+        count = 0
+        hasPixel = False
+        for x in range(DIGIT_DATUM_WIDTH):
+            if datum.getPixel(x, y) > 0:
+                if not hasPixel:
+                    hasPixel = True
+                    count += 1
+            elif hasPixel:
+                hasPixel = False
+
+        for fcount in range(maxCount):
+            if fcount == count:
+                features[('r' + str(y), fcount)] = 1
+            else:
+                features[('r' + str(y), fcount)] = 0
+
+    #== get black pixel counts
+    # points = 0
+    # buckets = 10
+    # bucketSize = DIGIT_DATUM_WIDTH * DIGIT_DATUM_HEIGHT / 3 / buckets
+    # for x in range(DIGIT_DATUM_WIDTH):
+    #     for y in range(DIGIT_DATUM_HEIGHT):
+    #         if datum.getPixel(x, y) > 0:
+    #             points += 1
+    # print "bucket", points / bucketSize
+    # for bucket in range(buckets):
+    #     if points / bucketSize == bucket:       # the amount of buckets will set 1
+    #         features[('b', bucket)] = 1
+    #     else:
+    #         features[('b', bucket)] = 0
+    # if points / bucketSize >= buckets:          # in case points exceed all buckets
+    #     features[('b', buckets - 1)] = 1
+
 
     return features
 
